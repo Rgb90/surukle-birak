@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 
 type Quote = {
   id: string,
   content: string
 };
 
-const initial = Array.from({ length: 10 }, (v, k) => k).map(k => {
+const initial = Array.from({ length: 10 }, (_, k) => k).map(k => {
   const custom: Quote = {
     id: `id-${k}`,
     content: `Quote ${k}`
@@ -17,7 +17,7 @@ const initial = Array.from({ length: 10 }, (v, k) => k).map(k => {
 });
 
 const grid = 8;
-const reorder = (list: number[], startIndex: number, endIndex: number) => {
+const reorder = (list: Quote[], startIndex: number, endIndex: number) => {
   const result = Array.from(list);
   const [removed] = result.splice(startIndex, 1);
   result.splice(endIndex, 0, removed);
@@ -33,10 +33,10 @@ const QuoteItem = styled.div`
   padding: ${grid}px;
 `;
 
-function Quote({ quote, index }: {quote: Quote, index: number}) {
+function Quote({ quote, index }: { quote: Quote, index: number }) {
   return (
     <Draggable draggableId={quote.id} index={index}>
-      {provided => (
+      {(provided) => (
         <QuoteItem
           ref={provided.innerRef}
           {...provided.draggableProps}
@@ -49,28 +49,30 @@ function Quote({ quote, index }: {quote: Quote, index: number}) {
   );
 }
 
-const QuoteList = React.memo(function QuoteList({ quotes }: {quotes: Quote[]}) {
+const QuoteList = React.memo(function QuoteList({ quotes,}: {quotes: Quote[];
+}) {
   return quotes.map((quote: Quote, index: number) => (
     <Quote quote={quote} index={index} key={quote.id} />
   ));
 });
 
+
 function App() {
   const [state, setState] = useState({ quotes: initial });
 
-  function onDragEnd(result: any) {
-    if (!result.destination) {
+  function onDragEnd(result: DropResult) {
+    if (result.destination) {
       return;
     }
 
-    if (result.destination.index === result.source.index) {
+    if (result.destination!.index === result.source.index) {
       return;
     }
 
     const quotes = reorder(
       state.quotes,
       result.source.index,
-      result.destination.index
+      result.destination!.index
     );
 
     setState({ quotes });
@@ -79,7 +81,7 @@ function App() {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <Droppable droppableId="list">
-        {provided => (
+        {(provided) => (
           <div ref={provided.innerRef} {...provided.droppableProps}>
             <QuoteList quotes={state.quotes} />
             {provided.placeholder}
